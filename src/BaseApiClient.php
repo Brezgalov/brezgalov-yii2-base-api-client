@@ -32,7 +32,13 @@ abstract class BaseApiClient extends Component implements IApiClient
      */
     public function buildRouteUrl(string $route, array $queryParams = [])
     {
-        return "{$this->baseUrl}/{$route}?" . http_build_query($queryParams);
+        $route = "{$this->baseUrl}/{$route}";
+
+        if ($queryParams) {
+            $route .= "?" . http_build_query($queryParams);
+        }
+
+        return $route;
     }
 
     /**
