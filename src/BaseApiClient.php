@@ -15,6 +15,11 @@ abstract class BaseApiClient extends Component implements IApiClient
     public $baseUrl;
 
     /**
+     * @var callable
+     */
+    public $prepareRequestCallback;
+
+    /**
      * @param string $url
      * @return $this
      */
@@ -55,6 +60,12 @@ abstract class BaseApiClient extends Component implements IApiClient
             $request = (new Client())->createRequest();
         }
 
-        return $request->setUrl($this->buildRouteUrl($route, $queryParams));
+        $request = $request->setUrl($this->buildRouteUrl($route, $queryParams));
+
+        if (is_callable($this->prepareRequestCallback)) {
+            $request = call_user_func($this->prepareRequestCallback, $request);
+        }
+
+        return $request;
     }
 }
