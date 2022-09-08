@@ -31,6 +31,17 @@ abstract class BaseApiClient extends Component implements IApiClient
     }
 
     /**
+     * @param callable $callback
+     * @return $this
+     */
+    public function setPrepareRequestCallback(callable $callback)
+    {
+        $this->prepareRequestCallback = $callback;
+
+        return $this;
+    }
+
+    /**
      * @param string $route
      * @param array $queryParams
      * @return string
