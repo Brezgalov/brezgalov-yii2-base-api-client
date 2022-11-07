@@ -10,19 +10,24 @@ use yii\httpclient\Response;
  */
 class ModelErrorsDataFormatter implements IDataFormatter
 {
+    public static function formatArray(array $response)
+    {
+        $res = [];
+        foreach ($response as $errorItem) {
+            $res[$errorItem['field']][] = $errorItem['message'];
+        }
+
+        return $res;
+    }
+
     /**
      * @param Response $response
      * @return array
      */
     public static function format(Response $response)
     {
-        $data = $response->getData();
-
-        $res = [];
-        foreach ($data as $datum) {
-            $res[$datum['field']][] = $datum['message'];
-        }
-
-        return $res;
+        return self::formatArray(
+            $response->getData()
+        );
     }
 }
