@@ -24,6 +24,11 @@ abstract class BaseApiClient extends Component implements IApiClient
     /**
      * @var callable[]
      */
+    private $onBeforeSendCallbacks = [];
+
+    /**
+     * @var callable[]
+     */
     private $onSendSucceedCallbacks = [];
 
     /**
@@ -48,6 +53,13 @@ abstract class BaseApiClient extends Component implements IApiClient
     public function addOnSendSucceedCallback(callable $callback): BaseApiClient
     {
         $this->onSendSucceedCallbacks[] = $callback;
+
+        return $this;
+    }
+
+    public function addOnBeforeSendCallback(callable $callback): BaseApiClient
+    {
+        $this->onBeforeSendCallbacks[] = $callback;
 
         return $this;
     }
@@ -107,7 +119,10 @@ abstract class BaseApiClient extends Component implements IApiClient
     public function sendRequest($request): Response
     {
         try {
+            $this->onBeforeSend($request);
+
             $response = $request->send();
+
             $this->onSendSuccess($request, $response);
 
             return $response;
@@ -118,6 +133,13 @@ abstract class BaseApiClient extends Component implements IApiClient
             $this->onSendFailed($requestFailedException);
 
             throw $requestFailedException;
+        }
+    }
+
+    protected function onBeforeSend(Request $request): void
+    {
+        foreach ($this->onBeforeSendCallbacks as $callback) {
+            call_user_func($callback, $request);
         }
     }
 
