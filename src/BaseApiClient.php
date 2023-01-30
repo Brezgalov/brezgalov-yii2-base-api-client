@@ -82,7 +82,7 @@ abstract class BaseApiClient extends Component implements IApiClient
     public function prepareRequest(string $route, array $queryParams = [], Request $request = null): Request
     {
         if (empty($request)) {
-            $request = (new Client())->createRequest();
+            $request = $this->makeRequest();
         }
 
         $request = $request->setUrl($this->buildRouteUrl($route, $queryParams));
@@ -90,6 +90,11 @@ abstract class BaseApiClient extends Component implements IApiClient
         $this->onPrepareRequest($request);
 
         return $request;
+    }
+
+    protected function makeRequest(): Request
+    {
+        return (new Client())->createRequest();
     }
 
     protected function onPrepareRequest(Request $request): void
