@@ -1,6 +1,6 @@
 <?php
 
-namespace Brezgalov\BaseApiClient\Exception;
+namespace Brezgalov\BaseApiClient\Exceptions;
 
 use Throwable;
 use yii\httpclient\Request;

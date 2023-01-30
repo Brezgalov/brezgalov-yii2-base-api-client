@@ -2,7 +2,7 @@
 
 namespace Brezgalov\BaseApiClient;
 
-use Brezgalov\BaseApiClient\Exception\RequestFailedException;
+use Brezgalov\BaseApiClient\Exceptions\RequestFailedException;
 use Throwable;
 use yii\base\Component;
 use yii\httpclient\Client;
