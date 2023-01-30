@@ -13,5 +13,5 @@ interface IApiClient
 
     public function prepareRequest(string $route, array $queryParams = [], Request $request = null): Request;
 
-    public function sendRequest($request): Response;
+    public function sendRequest(Request $request): Response;
 }

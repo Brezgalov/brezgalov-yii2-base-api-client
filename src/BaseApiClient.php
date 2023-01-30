@@ -17,21 +17,25 @@ abstract class BaseApiClient extends Component implements IApiClient
     public $baseUrl;
 
     /**
+     * signature: function (Request $request): void
      * @var callable[]
      */
     private $onPrepareRequestCallbacks = [];
 
     /**
+     * signature: function (Request $request): void
      * @var callable[]
      */
     private $onBeforeSendCallbacks = [];
 
     /**
+     * signature: function (Request $request, Response $response): void
      * @var callable[]
      */
     private $onSendSucceedCallbacks = [];
 
     /**
+     * signature: function (Throwable $ex, Request $request): void
      * @var callable[]
      */
     private $onSendFailedCallbacks = [];
@@ -116,7 +120,7 @@ abstract class BaseApiClient extends Component implements IApiClient
         }
     }
 
-    public function sendRequest($request): Response
+    public function sendRequest(Request $request): Response
     {
         try {
             $this->onBeforeSend($request);
@@ -129,15 +133,9 @@ abstract class BaseApiClient extends Component implements IApiClient
 
         } catch (Throwable $ex) {
 
-            $requestFailedException = new RequestFailedException(
-                $request,
-                $ex->getMessage(),
-                $ex->getCode(),
-                $ex
-            );
-            $this->onSendFailed($requestFailedException);
+            $this->onSendFailed($ex, $request);
 
-            throw $requestFailedException;
+            throw $ex;
         }
     }
 
@@ -155,10 +153,10 @@ abstract class BaseApiClient extends Component implements IApiClient
         }
     }
 
-    protected function onSendFailed(RequestFailedException $requestFailedException): void
+    protected function onSendFailed(Throwable $ex, Request $request): void
     {
         foreach ($this->onSendFailedCallbacks as $callback) {
-            call_user_func($callback, $requestFailedException);
+            call_user_func($callback, $ex, $request);
         }
     }
 }
