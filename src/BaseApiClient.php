@@ -129,7 +129,12 @@ abstract class BaseApiClient extends Component implements IApiClient
 
         } catch (Throwable $ex) {
 
-            $requestFailedException = new RequestFailedException($request, $ex->getCode(), $ex);
+            $requestFailedException = new RequestFailedException(
+                $request,
+                $ex->getMessage(),
+                $ex->getCode(),
+                $ex
+            );
             $this->onSendFailed($requestFailedException);
 
             throw $requestFailedException;
