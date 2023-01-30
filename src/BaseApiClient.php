@@ -2,10 +2,12 @@
 
 namespace Brezgalov\BaseApiClient;
 
+use Brezgalov\BaseApiClient\Exception\RequestFailedException;
+use Throwable;
 use yii\base\Component;
-use yii\base\InvalidConfigException;
 use yii\httpclient\Client;
 use yii\httpclient\Request;
+use yii\httpclient\Response;
 
 abstract class BaseApiClient extends Component implements IApiClient
 {
@@ -15,38 +17,58 @@ abstract class BaseApiClient extends Component implements IApiClient
     public $baseUrl;
 
     /**
-     * @var callable
+     * @var callable[]
      */
-    public $prepareRequestCallback;
+    private $onPrepareRequestCallbacks = [];
 
     /**
-     * @param string $url
-     * @return $this
+     * @var callable[]
      */
-    public function setBaseUrl(string $url)
+    private $onSendSucceedCallbacks = [];
+
+    /**
+     * @var callable[]
+     */
+    private $onSendFailedCallbacks = [];
+
+    public function setBaseUrl(string $url): IApiClient
     {
         $this->baseUrl = $url;
 
         return $this;
     }
 
-    /**
-     * @param callable $callback
-     * @return $this
-     */
-    public function setPrepareRequestCallback(callable $callback)
+    public function addOnPrepareRequestCallback(callable $callback): BaseApiClient
     {
-        $this->prepareRequestCallback = $callback;
+        $this->onPrepareRequestCallbacks[] = $callback;
 
         return $this;
     }
 
-    /**
-     * @param string $route
-     * @param array $queryParams
-     * @return string
-     */
-    public function buildRouteUrl(string $route, array $queryParams = [])
+    public function addOnSendSucceedCallback(callable $callback): BaseApiClient
+    {
+        $this->onSendSucceedCallbacks[] = $callback;
+
+        return $this;
+    }
+
+    public function addOnSendFailedCallback(callable $callback): BaseApiClient
+    {
+        $this->onSendFailedCallbacks[] = $callback;
+
+        return $this;
+    }
+
+    public function clearEvents(): BaseApiClient
+    {
+        $this->onPrepareRequestCallbacks = [];
+        $this->onSendSucceedCallbacks = [];
+        $this->onSendFailedCallbacks = [];
+
+        return $this;
+    }
+
+    public function buildRouteUrl(string $route, array $queryParams = []): string
     {
         $route = "{$this->baseUrl}/{$route}";
 
@@ -57,15 +79,7 @@ abstract class BaseApiClient extends Component implements IApiClient
         return $route;
     }
 
-    /**
-     * @param string $route
-     * @param array $queryParams
-     * @param array $input
-     * @param Request|null $request
-     * @return \yii\httpclient\Message|Request
-     * @throws InvalidConfigException
-     */
-    public function prepareRequest(string $route, array $queryParams = [], Request $request = null)
+    public function prepareRequest(string $route, array $queryParams = [], Request $request = null): Request
     {
         if (empty($request)) {
             $request = (new Client())->createRequest();
@@ -73,10 +87,46 @@ abstract class BaseApiClient extends Component implements IApiClient
 
         $request = $request->setUrl($this->buildRouteUrl($route, $queryParams));
 
-        if (is_callable($this->prepareRequestCallback)) {
-            $request = call_user_func($this->prepareRequestCallback, $request);
-        }
+        $this->onPrepareRequest($request);
 
         return $request;
+    }
+
+    protected function onPrepareRequest(Request $request): void
+    {
+        foreach ($this->onPrepareRequestCallbacks as $callback) {
+            call_user_func($callback, $request);
+        }
+    }
+
+    public function sendRequest($request): Response
+    {
+        try {
+            $response = $request->send();
+            $this->onSendSuccess($request, $response);
+
+            return $response;
+
+        } catch (Throwable $ex) {
+
+            $requestFailedException = new RequestFailedException($request, $ex->getCode(), $ex);
+            $this->onSendFailed($requestFailedException);
+
+            throw $requestFailedException;
+        }
+    }
+
+    protected function onSendSuccess(Request $request, Response $response): void
+    {
+        foreach ($this->onSendSucceedCallbacks as $callback) {
+            call_user_func($callback, $request, $response);
+        }
+    }
+
+    protected function onSendFailed(RequestFailedException $requestFailedException): void
+    {
+        foreach ($this->onSendFailedCallbacks as $callback) {
+            call_user_func($callback, $requestFailedException);
+        }
     }
 }

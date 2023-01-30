@@ -2,31 +2,16 @@
 
 namespace Brezgalov\BaseApiClient;
 
-use yii\base\InvalidConfigException;
 use yii\httpclient\Request;
+use yii\httpclient\Response;
 
 interface IApiClient
 {
-    /**
-     * @param string $url
-     * @return $this
-     */
-    public function setBaseUrl(string $url);
+    public function setBaseUrl(string $url): IApiClient;
 
-    /**
-     * @param string $route
-     * @param array $queryParams
-     * @return string
-     */
-    public function buildRouteUrl(string $route, array $queryParams = []);
+    public function buildRouteUrl(string $route, array $queryParams = []): string;
 
-    /**
-     * @param string $route
-     * @param array $queryParams
-     * @param array $input
-     * @param Request|null $request
-     * @return \yii\httpclient\Message|Request
-     * @throws InvalidConfigException
-     */
-    public function prepareRequest(string $route, array $queryParams = [], Request $request = null);
+    public function prepareRequest(string $route, array $queryParams = [], Request $request = null): Request;
+
+    public function sendRequest($request): Response;
 }
